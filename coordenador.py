@@ -14,6 +14,7 @@ servidor.bind((HOST, PORT))
 # Lista para armazenar os clientes conectados
 clientes = []
 mutex = []
+processos_atendidos = {}
 
 def handle_cliente():
     while True:
@@ -26,6 +27,10 @@ def handle_cliente():
             if(len(mutex) == 0):
                 resposta = 'GRANT ' + str(aux[1])
                 mutex.append(str(aux[1]))
+                if (str(aux[1]) in processos_atendidos):
+                    processos_atendidos[str(aux[1])] += 1
+                else:
+                    processos_atendidos[str(aux[1])] = 1
                 cliente.send(resposta.encode())
 
             while(mensagem != 'RELEASE'):
@@ -35,7 +40,21 @@ def handle_cliente():
             clientes.pop(0)
         
 
+def handle_interface():
+    while True:
+        command = input("Digite o comando (1: imprimir fila, 2: imprimir processos atendidos): ")
+        if command == '1':
+            print(f"Fila de processos: {clientes}")
+        elif command == '2':
+            for chave, valor in processos_atendidos.items():
+                print("Processo " + str(chave) + " foi atendido " + str(valor) + " vezez!")
+
+        else:
+            print("Comando inválido.")
+
+
 # Habilita o servidor para receber conexões
+threading.Thread(target=handle_interface).start()
 servidor.listen()
 
 print('Aguardando conexões...')
